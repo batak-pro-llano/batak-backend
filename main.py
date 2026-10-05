@@ -3,7 +3,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import mysql.connector
-import uuid
 
 app = FastAPI(title="API Batak System")
 
@@ -14,17 +13,15 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def leer_app():
     return FileResponse("static/index.html")
 
-import pymysql
 # Configuración de la conexión a MySQL en Aiven.io
 def get_db_connection():
-    return pymysql.connect(
-        host="mysql-3873d10f-batak.h.aivencloud.com", #[cite: 11]
-        port=28819,                                   #[cite: 11]
-        user="avnadmin",                              #[cite: 11]
-        password="AVNS_slRn8ktsJbPkE7hlO-q",          #[cite: 11]
-        database="defaultdb",                         #[cite: 11]
-        ssl={"ssl": True},
-        cursorclass=pymysql.cursors.DictCursor
+    return mysql.connector.connect(
+        host="mysql-3873d10f-batak.h.aivencloud.com",
+        port=28819,
+        user="avnadmin",
+        password="AVNS_slRn8ktsJbpkE7hlO-q",
+        database="defaultdb",
+        ssl_disabled=False
     )
 
 # Modelos de datos de entrada
@@ -37,155 +34,100 @@ class UsuarioLogin(BaseModel):
     email: str
     password: str
 
-class ValidarQRRequest(BaseModel):
-    codigo_qr: str
+class ValidacionQR(BaseModel):
+    qr_code: str
 
-class GuardarPartidaRequest(BaseModel):
-    usuario_id: int | None = None
-    nivel: int
-    puntos: int
-    tiempo_segundos: float
+class PartidaGuardar(BaseModel):
+    usuario_id: int
+    puntaje: int
 
-
-# --- ENDPOINTS DE LA API ---
-
-@app.get("/")
-def inicio():
-    return {"status": "ok", "mensaje": "API Batak en ejecución"}
-
-
-# 1. REGISTRO DE USUARIO
+# Rutas de la API
 @app.post("/api/registro")
 def registrar_usuario(usuario: UsuarioRegistro):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        codigo_qr = f"BATAK-{uuid.uuid4().hex[:8].upper()}"
-        
-        sql = "INSERT INTO usuarios (NOMBRE, EMAIL, CONTRASEÑA, CÓDIGO_QR) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (usuario.nombre, usuario.email, usuario.password, codigo_qr))
+        # Verificar si el email ya existe
+        cursor.execute("SELECT * FROM usuarios WHERE email = %s", (usuario.email,))
+        if cursor.fetchone():
+            conn.close()
+            raise HTTPException(status_code=400, detail="El email ya está registrado")
+            
+        # Insertar nuevo usuario
+        query = "INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)"
+        cursor.execute(query, (usuario.nombre, usuario.email, usuario.password))
         conn.commit()
         
         usuario_id = cursor.lastrowid
-        cursor.close()
         conn.close()
         
-        return {
-            "exito": True,
-            "mensaje": "Usuario registrado correctamente",
-            "usuario_id": usuario_id,
-            "codigo_qr": codigo_qr
-        }
+        return {"mensaje": "Usuario registrado exitosamente", "id": usuario_id}
     except mysql.connector.Error as err:
-        if err.errno == 1062:
-            raise HTTPException(status_code=400, detail="El correo ya está registrado.")
         raise HTTPException(status_code=500, detail=f"Error en BBDD: {err}")
 
-
-# 2. INICIO DE SESIÓN
 @app.post("/api/login")
-def iniciar_sesion(usuario: UsuarioLogin):
+def login_usuario(usuario: UsuarioLogin):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        sql = "SELECT ID, NOMBRE, EMAIL, CÓDIGO_QR FROM usuarios WHERE EMAIL = %s AND CONTRASEÑA = %s"
-        cursor.execute(sql, (usuario.email, usuario.password))
+        query = "SELECT id, nombre, email FROM usuarios WHERE email = %s AND password = %s"
+        cursor.execute(query, (usuario.email, usuario.password))
         user = cursor.fetchone()
-        
-        cursor.close()
         conn.close()
         
-        if user:
-            return {
-                "exito": True,
-                "mensaje": "Inicio de sesión correcto",
-                "usuario": user
-            }
-        else:
-            raise HTTPException(status_code=400, detail="Correo o contraseña incorrectos")
+        if not user:
+            raise HTTPException(status_code=401, detail="Credenciales incorrectas")
             
+        return {"mensaje": "Inicio de sesión exitoso", "usuario": user}
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en BBDD: {err}")
 
-
-# 3. VALIDACIÓN DE CÓDIGO QR (Para la consola Batak)
 @app.post("/api/validar-qr")
-def validar_qr(data: ValidarQRRequest):
+def validar_qr(data: ValidacionQR):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        sql = "SELECT ID, NOMBRE, EMAIL, CÓDIGO_QR FROM usuarios WHERE CÓDIGO_QR = %s"
-        cursor.execute(sql, (data.codigo_qr,))
-        usuario = cursor.fetchone()
-        
-        cursor.close()
+        query = "SELECT id, nombre, email FROM usuarios WHERE email = %s"
+        cursor.execute(query, (data.qr_code,))
+        user = cursor.fetchone()
         conn.close()
         
-        if usuario:
-            return {
-                "valido": True,
-                "mensaje": "Usuario encontrado",
-                "usuario": usuario
-            }
-        else:
-            return {
-                "valido": False,
-                "mensaje": "El código QR no pertenece a ningún usuario registrado"
-            }
+        if not user:
+            return {"valido": False, "mensaje": "Código QR no válido o usuario no existe"}
+            
+        return {"valido": True, "usuario": user}
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en BBDD: {err}")
 
-
-# 4. GUARDAR RESULTADOS DE PARTIDA
 @app.post("/api/guardar-partida")
-def guardar_partida(partida: GuardarPartidaRequest):
+def guardar_partida(partida: PartidaGuardar):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        sql = "INSERT INTO partidas (ID_USUARIO, NIVEL, POINT, TIEMPO_SEG) VALUES (%s, %s, %s, %s)"
-        cursor.execute(sql, (partida.usuario_id, partida.nivel, partida.puntos, partida.tiempo_segundos))
+        query = "INSERT INTO partidas (usuario_id, puntaje) VALUES (%s, %s)"
+        cursor.execute(query, (partida.usuario_id, partida.puntaje))
         conn.commit()
-        
-        partida_id = cursor.lastrowid
-        cursor.close()
         conn.close()
         
-        return {
-            "exito": True,
-            "mensaje": "Partida registrada exitosamente",
-            "partida_id": partida_id
-        }
+        return {"mensaje": "Partida guardada exitosamente"}
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en BBDD: {err}")
 
-
-# 5. CONSULTAR HISTORIAL DE PARTIDAS DE UN USUARIO
 @app.get("/api/historial/{usuario_id}")
 def obtener_historial(usuario_id: int):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        sql = """
-            SELECT ID, NIVEL, POINT, TIEMPO_SEG, FECHHA_PARTIDA 
-            FROM partidas 
-            WHERE ID_USUARIO = %s 
-            ORDER BY FECHHA_PARTIDA DESC
-        """
-        cursor.execute(sql, (usuario_id,))
-        historial = cursor.fetchall()
-        
-        cursor.close()
+        query = "SELECT id, puntaje, fecha FROM partidas WHERE usuario_id = %s ORDER BY fecha DESC"
+        cursor.execute(query, (usuario_id,))
+        partidas = cursor.fetchall()
         conn.close()
         
-        return {
-            "exito": True,
-            "total": len(historial),
-            "historial": historial
-        }
+        return {"partidas": partidas}
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en BBDD: {err}")
