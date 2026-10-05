@@ -22,6 +22,7 @@ def get_db_connection():
         password=os.environ.get("DB_PASSWORD"),
         database="defaultdb",
         ssl_disabled=False
+        use_pure=True
     )
 
 # Modelos de datos de entrada
