@@ -19,7 +19,7 @@ def get_db_connection():
         host="mysql-3873d10f-batak.h.aivencloud.com",
         port=28819,
         user="avnadmin",
-        password="AVNS_slRn8ktsJbpkE7hlO-q",
+        password=os.environ.get("DB_PASSWORD"),
         database="defaultdb",
         ssl_disabled=False
     )
