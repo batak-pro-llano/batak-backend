@@ -23,7 +23,7 @@ def get_db_connection():
         user="avnadmin",                              #[cite: 11]
         password="AVNS_slRn8ktsJbPkE7hlO-q",          #[cite: 11]
         database="defaultdb",                         #[cite: 11]
-        ssl_disabled=False                            # Requerido por Aiven[cite: 11]
+        ssl_mode="REQUIRED"                            # Requerido por Aiven[cite: 11]
     )
 
 # Modelos de datos de entrada
