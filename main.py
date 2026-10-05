@@ -14,17 +14,17 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def leer_app():
     return FileResponse("static/index.html")
 
-
+import pymysql
 # Configuración de la conexión a MySQL en Aiven.io
 def get_db_connection():
-    return mysql.connector.connect(
+    return pymysql.connect(
         host="mysql-3873d10f-batak.h.aivencloud.com", #[cite: 11]
         port=28819,                                   #[cite: 11]
         user="avnadmin",                              #[cite: 11]
         password="AVNS_slRn8ktsJbPkE7hlO-q",          #[cite: 11]
         database="defaultdb",                         #[cite: 11]
-        ssl_disabled=False                            # Requerido por Aiven[cite: 11]
-        ssl_verify_cert=False
+        ssl={"ssl": True},
+        cursorclass=pymysql.cursors.DictCursor
     )
 
 # Modelos de datos de entrada
