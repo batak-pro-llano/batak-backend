@@ -3,275 +3,299 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Batak Game - Portal Jugador</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>BATAK SYSTEM</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        h1 {
+            color: #58a6ff;
+            font-size: 24px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p.subtitle {
+            color: #8b949e;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .tab-btn.active {
+            color: #58a6ff;
+            border-bottom: 2px solid #58a6ff;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background-color: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #f0f6fc;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #58a6ff;
+        }
+
+        button.btn-submit {
+            width: 100%;
+            padding: 12px;
+            background-color: #238636;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+
+        button.btn-submit:hover {
+            background-color: #2ea043;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #qr-card {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #0d1117;
+            border-radius: 8px;
+            border: 1px solid #30363d;
+        }
+
+        #qr-image {
+            width: 180px;
+            height: 180px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background-color: #ffffff;
+            padding: 8px;
+        }
+
+        .user-info {
+            color: #58a6ff;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .qr-code-text {
+            font-family: monospace;
+            background: #21262d;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #79c0ff;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
+<body>
 
-    <div class="bg-slate-800 p-6 rounded-2xl shadow-2xl w-full max-w-md border border-slate-700">
-        <h1 class="text-3xl font-bold text-center text-cyan-400 mb-2">BATAK SYSTEM</h1>
-        <p class="text-slate-400 text-center text-sm mb-6">Acceso a jugadores y seguimiento de puntajes</p>
+    <div class="container">
+        <h1>BATAK SYSTEM</h1>
+        <p class="subtitle">Acceso a jugadores y seguimiento de puntajes</p>
 
-        <!-- SECTOR DE PESTAÑAS (REGISTRO / LOGIN) -->
-        <div id="tabsHeader" class="flex border-b border-slate-700 mb-6">
-            <button id="tabRegisterBtn" onclick="showTab('register')" 
-                class="w-1/2 py-2 text-center text-sm font-bold border-b-2 border-cyan-400 text-cyan-400 focus:outline-none">
-                Registrarse
-            </button>
-            <button id="tabLoginBtn" onclick="showTab('login')" 
-                class="w-1/2 py-2 text-center text-sm font-bold text-slate-400 border-b-2 border-transparent hover:text-white focus:outline-none">
-                Iniciar Sesión
-            </button>
+        <!-- Pestañas de Navegación -->
+        <div class="tabs" id="tab-container">
+            <button class="tab-btn active" onclick="mostrarFormulario('login')">INICIAR SESIÓN</button>
+            <button class="tab-btn" onclick="mostrarFormulario('registro')">REGISTRARSE</button>
         </div>
 
-        <!-- FORMULARIO DE REGISTRO -->
-        <form id="registroForm" class="space-y-4">
-            <div>
-                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Nombre Completo</label>
-                <input type="text" id="regNombre" required placeholder="Tu nombre" 
-                    class="w-full px-4 py-2 bg-slate-700 rounded-lg text-white border border-slate-600 focus:outline-none focus:border-cyan-400">
+        <!-- Formulario de Login -->
+        <form id="form-login" onsubmit="realizarLogin(event)">
+            <div class="form-group">
+                <label for="login-email">Correo Electrónico</label>
+                <input type="email" id="login-email" required placeholder="tuemail@ejemplo.com">
             </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Correo Electrónico</label>
-                <input type="email" id="regEmail" required placeholder="correo@ejemplo.com" 
-                    class="w-full px-4 py-2 bg-slate-700 rounded-lg text-white border border-slate-600 focus:outline-none focus:border-cyan-400">
+            <div class="form-group">
+                <label for="login-password">Contraseña</label>
+                <input type="password" id="login-password" required placeholder="••••••••">
             </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Contraseña</label>
-                <input type="password" id="regPassword" required placeholder="••••••••" 
-                    class="w-full px-4 py-2 bg-slate-700 rounded-lg text-white border border-slate-600 focus:outline-none focus:border-cyan-400">
-            </div>
-            <button type="submit" 
-                class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold rounded-lg transition duration-200">
-                Obtener Código QR
-            </button>
+            <button type="submit" class="btn-submit">Ingresar</button>
         </form>
 
-        <!-- FORMULARIO DE INICIO DE SESIÓN -->
-        <form id="loginForm" class="space-y-4 hidden">
-            <div>
-                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Correo Electrónico</label>
-                <input type="email" id="loginEmail" required placeholder="correo@ejemplo.com" 
-                    class="w-full px-4 py-2 bg-slate-700 rounded-lg text-white border border-slate-600 focus:outline-none focus:border-cyan-400">
+        <!-- Formulario de Registro -->
+        <form id="form-registro" class="hidden" onsubmit="realizarRegistro(event)">
+            <div class="form-group">
+                <label for="reg-nombre">Nombre de Jugador</label>
+                <input type="text" id="reg-nombre" required placeholder="Ej: Piloto_01">
             </div>
-            <div>
-                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Contraseña</label>
-                <input type="password" id="loginPassword" required placeholder="••••••••" 
-                    class="w-full px-4 py-2 bg-slate-700 rounded-lg text-white border border-slate-600 focus:outline-none focus:border-cyan-400">
+            <div class="form-group">
+                <label for="reg-email">Correo Electrónico</label>
+                <input type="email" id="reg-email" required placeholder="tuemail@ejemplo.com">
             </div>
-            <button type="submit" 
-                class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold rounded-lg transition duration-200">
-                Ingresar a Mi Cuenta
-            </button>
+            <div class="form-group">
+                <label for="reg-password">Contraseña</label>
+                <input type="password" id="reg-password" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn-submit">Crear Cuenta</button>
         </form>
 
-        <!-- SECCIÓN PERFIL Y CÓDIGO QR -->
-        <div id="profileSection" class="hidden text-center space-y-4">
-            <h2 id="userNameText" class="text-xl font-bold text-cyan-400"></h2>
-            <p class="text-slate-300 text-sm">Escanea este código QR en la consola Batak:</p>
+        <!-- Tarjeta del Código QR -->
+        <div id="qr-card" class="hidden">
+            <p class="user-info" id="user-display-name">Jugador</p>
+            <p style="font-size: 12px; color: #8b949e;">Muestra este código al lector Batak</p>
             
-            <div class="flex justify-center p-4 bg-white rounded-xl w-fit mx-auto shadow-inner">
-                <div id="qrcode"></div>
+            <img id="qr-image" src="" alt="Código QR del Jugador">
+            
+            <div>
+                <span class="qr-code-text" id="qr-code-display">BATAK-XXXXXX</span>
             </div>
 
-            <p id="qrText" class="text-xs text-slate-400 font-mono"></p>
-
-            <div class="pt-2 flex flex-col gap-2">
-                <button id="btnHistorial" 
-                    class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-cyan-400 font-semibold rounded-lg border border-cyan-500/30 transition">
-                    📜 Ver Mi Historial de Partidas
-                </button>
-                <button onclick="cerrarSesion()" 
-                    class="w-full py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold rounded-lg border border-red-500/30 transition text-xs">
-                    Cerrar Sesión
-                </button>
-            </div>
-        </div>
-
-        <!-- SECCIÓN HISTORIAL DE PARTIDAS -->
-        <div id="historialSection" class="hidden space-y-4">
-            <h2 class="text-xl font-bold text-center text-cyan-400">Mis Partidas Guardadas</h2>
-            <div id="contenedorTabla" class="max-h-60 overflow-y-auto border border-slate-700 rounded-lg">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-slate-700 text-slate-300 uppercase sticky top-0">
-                        <tr>
-                            <th class="p-2">Nivel</th>
-                            <th class="p-2">Puntos</th>
-                            <th class="p-2">Tiempo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaCuerpo" class="divide-y divide-slate-700 text-slate-200">
-                    </tbody>
-                </table>
-            </div>
-            <p id="sinPartidas" class="text-xs text-slate-400 text-center hidden">Aún no has jugado ninguna partida.</p>
-            <button id="btnVolverPerfil" 
-                class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold rounded-lg text-sm transition">
-                ⬅ Volver a Mi Código QR
-            </button>
+            <button class="btn-submit" style="background-color: #21262d; margin-top: 15px;" onclick="cerrarSesion()">Cerrar Sesión</button>
         </div>
     </div>
 
     <script>
-        let currentUserId = localStorage.getItem('batak_user_id');
-        let currentUserName = localStorage.getItem('batak_user_name');
-        let currentQR = localStorage.getItem('batak_user_qr');
+        function mostrarFormulario(tipo) {
+            const formLogin = document.getElementById('form-login');
+            const formRegistro = document.getElementById('form-registro');
+            const btns = document.querySelectorAll('.tab-btn');
 
-        // Control de Pestañas
-        function showTab(tab) {
-            const regForm = document.getElementById('registroForm');
-            const loginForm = document.getElementById('loginForm');
-            const tabRegBtn = document.getElementById('tabRegisterBtn');
-            const tabLoginBtn = document.getElementById('tabLoginBtn');
-
-            if (tab === 'register') {
-                regForm.classList.remove('hidden');
-                loginForm.classList.add('hidden');
-                tabRegBtn.className = "w-1/2 py-2 text-center text-sm font-bold border-b-2 border-cyan-400 text-cyan-400 focus:outline-none";
-                tabLoginBtn.className = "w-1/2 py-2 text-center text-sm font-bold text-slate-400 border-b-2 border-transparent hover:text-white focus:outline-none";
+            if (tipo === 'login') {
+                formLogin.classList.remove('hidden');
+                formRegistro.classList.add('hidden');
+                btns[0].classList.add('active');
+                btns[1].classList.remove('active');
             } else {
-                regForm.classList.add('hidden');
-                loginForm.classList.remove('hidden');
-                tabLoginBtn.className = "w-1/2 py-2 text-center text-sm font-bold border-b-2 border-cyan-400 text-cyan-400 focus:outline-none";
-                tabRegBtn.className = "w-1/2 py-2 text-center text-sm font-bold text-slate-400 border-b-2 border-transparent hover:text-white focus:outline-none";
+                formLogin.classList.add('hidden');
+                formRegistro.classList.remove('hidden');
+                btns[0].classList.remove('active');
+                btns[1].classList.add('active');
             }
         }
 
-        // Cargar perfil guardado automáticamente si existe sesión previa
-        window.addEventListener('DOMContentLoaded', () => {
-            if (currentUserId && currentQR) {
-                mostrarPerfil(currentUserName, currentQR);
-            }
-        });
-
-        function mostrarPerfil(nombre, qrCode) {
-            document.getElementById('tabsHeader').classList.add('hidden');
-            document.getElementById('registroForm').classList.add('hidden');
-            document.getElementById('loginForm').classList.add('hidden');
-            document.getElementById('profileSection').classList.remove('hidden');
-
-            document.getElementById('userNameText').innerText = "¡Hola, " + nombre + "!";
-            document.getElementById('qrText').innerText = "ID QR: " + qrCode;
-
-            const qrcodeDiv = document.getElementById('qrcode');
-            qrcodeDiv.innerHTML = "";
-            new QRCode(qrcodeDiv, {
-                text: qrCode,
-                width: 180,
-                height: 180
-            });
-        }
-
-        // REGISTRO
-        document.getElementById('registroForm').addEventListener('submit', async (e) => {
+        async function realizarRegistro(e) {
             e.preventDefault();
-            const usuario = {
-                nombre: document.getElementById('regNombre').value,
-                email: document.getElementById('regEmail').value,
-                password: document.getElementById('regPassword').value
-            };
+            const nombre = document.getElementById('reg-nombre').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
 
             try {
                 const res = await fetch('/api/registro', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(usuario)
+                    body: JSON.stringify({ nombre, email, password })
                 });
+
                 const data = await res.json();
 
-                if (res.ok && data.exito) {
-                    guardarSesion(data.usuario_id, usuario.nombre, data.codigo_qr);
-                    mostrarPerfil(usuario.nombre, data.codigo_qr);
+                if (res.ok) {
+                    mostrarQR(data.nombre, data.qr_code);
                 } else {
-                    alert(data.detail || "Error al registrar");
+                    alert("Error: " + (data.detail || data.mensaje));
                 }
             } catch (err) {
-                alert("Error de conexión");
+                alert("Error de conexión al servidor");
             }
-        });
+        }
 
-        // LOGIN
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        async function realizarLogin(e) {
             e.preventDefault();
-            const credenciales = {
-                email: document.getElementById('loginEmail').value,
-                password: document.getElementById('loginPassword').value
-            };
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
 
             try {
                 const res = await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(credenciales)
+                    body: JSON.stringify({ email, password })
                 });
+
                 const data = await res.json();
 
-                if (res.ok && data.exito) {
-                    guardarSesion(data.usuario.ID, data.usuario.NOMBRE, data.usuario.CÓDIGO_QR);
-                    mostrarPerfil(data.usuario.NOMBRE, data.usuario.CÓDIGO_QR);
+                if (res.ok) {
+                    mostrarQR(data.nombre, data.qr_code);
                 } else {
-                    alert(data.detail || "Error al iniciar sesión");
+                    alert("Error: " + (data.detail || data.mensaje));
                 }
             } catch (err) {
-                alert("Error de conexión");
+                alert("Error de conexión al servidor");
             }
-        });
+        }
 
-        // HISTORIAL DE PARTIDAS
-        document.getElementById('btnHistorial').addEventListener('click', async () => {
-            if (!currentUserId) return;
+        function mostrarQR(nombre, qrCode) {
+            document.getElementById('form-login').classList.add('hidden');
+            document.getElementById('form-registro').classList.add('hidden');
+            document.getElementById('tab-container').classList.add('hidden');
 
-            try {
-                const res = await fetch(`/api/historial/${currentUserId}`);
-                const data = await res.json();
+            document.getElementById('user-display-name').textContent = "¡Bienvenido, " + nombre + "!";
+            document.getElementById('qr-code-display').textContent = qrCode;
 
-                if (res.ok && data.exito) {
-                    const tbody = document.getElementById('tablaCuerpo');
-                    const sinPartidas = document.getElementById('sinPartidas');
-                    tbody.innerHTML = "";
+            // Genera la imagen utilizando la API de QR Server
+            const urlImagen = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`;
+            document.getElementById('qr-image').src = urlImagen;
 
-                    if (data.historial.length === 0) {
-                        sinPartidas.classList.remove('hidden');
-                    } else {
-                        sinPartidas.classList.add('hidden');
-                        data.historial.forEach(p => {
-                            const fila = `
-                                <tr class="hover:bg-slate-700/50">
-                                    <td class="p-2 font-bold text-cyan-400">Nivel ${p.NIVEL}</td>
-                                    <td class="p-2 font-semibold">${p.POINT} pts</td>
-                                    <td class="p-2">${p.TIEMPO_SEG}s</td>
-                                </tr>
-                            `;
-                            tbody.innerHTML += fila;
-                        });
-                    }
-
-                    document.getElementById('profileSection').classList.add('hidden');
-                    document.getElementById('historialSection').classList.remove('hidden');
-                }
-            } catch (err) {
-                alert("Error cargando el historial");
-            }
-        });
-
-        document.getElementById('btnVolverPerfil').addEventListener('click', () => {
-            document.getElementById('historialSection').classList.add('hidden');
-            document.getElementById('profileSection').classList.remove('hidden');
-        });
-
-        function guardarSesion(id, nombre, qr) {
-            currentUserId = id;
-            currentUserName = nombre;
-            currentQR = qr;
-            localStorage.setItem('batak_user_id', id);
-            localStorage.setItem('batak_user_name', nombre);
-            localStorage.setItem('batak_user_qr', qr);
+            document.getElementById('qr-card').classList.remove('hidden');
         }
 
         function cerrarSesion() {
-            localStorage.clear();
-            window.location.reload();
+            document.getElementById('qr-card').classList.add('hidden');
+            document.getElementById('tab-container').classList.remove('hidden');
+            mostrarFormulario('login');
         }
     </script>
 </body>

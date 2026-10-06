@@ -8,14 +8,12 @@ import mysql.connector
 
 app = FastAPI(title="API Batak System")
 
-# Servir la carpeta de archivos estáticos (HTML/CSS/JS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/app", response_class=FileResponse)
 def leer_app():
     return FileResponse("static/index.html")
 
-# Configuración de la conexión a MySQL en Aiven.io
 def get_db_connection():
     return mysql.connector.connect(
         host="mysql-3873d10f-batak.h.aivencloud.com",
@@ -27,7 +25,6 @@ def get_db_connection():
         use_pure=True
     )
 
-# Modelos de datos de entrada
 class UsuarioRegistro(BaseModel):
     nombre: str
     email: str
@@ -44,23 +41,19 @@ class PartidaGuardar(BaseModel):
     usuario_id: int
     puntaje: int
 
-# Rutas de la API
 @app.post("/api/registro")
 def registrar_usuario(usuario: UsuarioRegistro):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        # Verificar si el email ya existe
         cursor.execute("SELECT * FROM usuarios WHERE email = %s", (usuario.email,))
         if cursor.fetchone():
             conn.close()
             raise HTTPException(status_code=400, detail="El email ya está registrado")
             
-        # Generar un código QR único
         codigo_qr_unico = f"BATAK-{uuid.uuid4().hex[:8].upper()}"
             
-        # Insertar nuevo usuario guardando su código QR único
         query = "INSERT INTO usuarios (nombre, email, password, CODIGO_QR) VALUES (%s, %s, %s, %s)"
         cursor.execute(query, (usuario.nombre, usuario.email, usuario.password, codigo_qr_unico))
         conn.commit()
@@ -71,6 +64,8 @@ def registrar_usuario(usuario: UsuarioRegistro):
         return {
             "mensaje": "Usuario registrado exitosamente", 
             "id": usuario_id,
+            "nombre": usuario.nombre,
+            "email": usuario.email,
             "qr_code": codigo_qr_unico
         }
     except mysql.connector.Error as err:
@@ -90,7 +85,13 @@ def login_usuario(usuario: UsuarioLogin):
         if not user:
             raise HTTPException(status_code=401, detail="Credenciales incorrectas")
             
-        return {"mensaje": "Inicio de sesión exitoso", "usuario": user}
+        return {
+            "mensaje": "Inicio de sesión exitoso", 
+            "id": user["id"],
+            "nombre": user["nombre"],
+            "email": user["email"],
+            "qr_code": user["CODIGO_QR"]
+        }
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en BBDD: {err}")
 
