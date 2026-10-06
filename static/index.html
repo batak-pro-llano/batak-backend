@@ -115,11 +115,20 @@
             background-color: #2ea043;
         }
 
+        button.btn-secondary {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+        }
+
+        button.btn-secondary:hover {
+            background-color: #30363d;
+        }
+
         .hidden {
             display: none;
         }
 
-        #qr-card {
+        #qr-card, #historial-card {
             margin-top: 20px;
             padding: 20px;
             background-color: #0d1117;
@@ -149,6 +158,30 @@
             border-radius: 4px;
             font-size: 13px;
             color: #79c0ff;
+        }
+
+        .historial-list {
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .historial-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #21262d;
+            font-size: 14px;
+        }
+
+        .historial-item:last-child {
+            border-bottom: none;
+        }
+
+        .puntaje-val {
+            color: #3fb950;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -205,11 +238,25 @@
                 <span class="qr-code-text" id="qr-code-display">BATAK-XXXXXX</span>
             </div>
 
-            <button class="btn-submit" style="background-color: #21262d; margin-top: 15px;" onclick="cerrarSesion()">Cerrar Sesión</button>
+            <button class="btn-submit" style="background-color: #1f6beb; margin-top: 15px;" onclick="cargarHistorial()">Ver Historial</button>
+            <button class="btn-submit btn-secondary" style="margin-top: 8px;" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+
+        <!-- Tarjeta de Historial -->
+        <div id="historial-card" class="hidden">
+            <h3 style="color: #58a6ff; font-size: 16px; margin-bottom: 10px;">Historial de Partidas</h3>
+            
+            <div id="lista-historial" class="historial-list">
+                <p style="text-align: center; color: #8b949e;">Cargando...</p>
+            </div>
+
+            <button class="btn-submit btn-secondary" style="margin-top: 15px;" onclick="volverAQR()">Volver al QR</button>
         </div>
     </div>
 
     <script>
+        let usuarioActualId = null;
+
         function mostrarFormulario(tipo) {
             const formLogin = document.getElementById('form-login');
             const formRegistro = document.getElementById('form-registro');
@@ -244,6 +291,7 @@
                 const data = await res.json();
 
                 if (res.ok) {
+                    usuarioActualId = data.id;
                     mostrarQR(data.nombre, data.qr_code);
                 } else {
                     alert("Error: " + (data.detail || data.mensaje));
@@ -268,6 +316,7 @@
                 const data = await res.json();
 
                 if (res.ok) {
+                    usuarioActualId = data.id;
                     mostrarQR(data.nombre, data.qr_code);
                 } else {
                     alert("Error: " + (data.detail || data.mensaje));
@@ -281,19 +330,58 @@
             document.getElementById('form-login').classList.add('hidden');
             document.getElementById('form-registro').classList.add('hidden');
             document.getElementById('tab-container').classList.add('hidden');
+            document.getElementById('historial-card').classList.add('hidden');
 
             document.getElementById('user-display-name').textContent = "¡Bienvenido, " + nombre + "!";
             document.getElementById('qr-code-display').textContent = qrCode;
 
-            // Genera la imagen utilizando la API de QR Server
             const urlImagen = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`;
             document.getElementById('qr-image').src = urlImagen;
 
             document.getElementById('qr-card').classList.remove('hidden');
         }
 
-        function cerrarSesion() {
+        async function cargarHistorial() {
+            if (!usuarioActualId) return;
+
             document.getElementById('qr-card').classList.add('hidden');
+            document.getElementById('historial-card').classList.remove('hidden');
+
+            const lista = document.getElementById('lista-historial');
+            lista.innerHTML = '<p style="text-align: center; color: #8b949e;">Cargando partidas...</p>';
+
+            try {
+                const res = await fetch(`/api/historial/${usuarioActualId}`);
+                const data = await res.json();
+
+                if (res.ok && data.partidas && data.partidas.length > 0) {
+                    lista.innerHTML = '';
+                    data.partidas.forEach((p, index) => {
+                        const fechaFormateada = p.fecha ? new Date(p.fecha).toLocaleDateString() : `#${index + 1}`;
+                        lista.innerHTML += `
+                            <div class="historial-item">
+                                <span>Partida ${fechaFormateada}</span>
+                                <span class="puntaje-val">${p.puntaje} pts</span>
+                            </div>
+                        `;
+                    });
+                } else {
+                    lista.innerHTML = '<p style="text-align: center; color: #8b949e;">Aún no tienes partidas registradas.</p>';
+                }
+            } catch (err) {
+                lista.innerHTML = '<p style="text-align: center; color: #f85149;">Error al cargar el historial.</p>';
+            }
+        }
+
+        function volverAQR() {
+            document.getElementById('historial-card').classList.add('hidden');
+            document.getElementById('qr-card').classList.remove('hidden');
+        }
+
+        function cerrarSesion() {
+            usuarioActualId = null;
+            document.getElementById('qr-card').classList.add('hidden');
+            document.getElementById('historial-card').classList.add('hidden');
             document.getElementById('tab-container').classList.remove('hidden');
             mostrarFormulario('login');
         }
