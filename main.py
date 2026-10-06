@@ -1,4 +1,5 @@
 import os
+import uuid
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -56,9 +57,12 @@ def registrar_usuario(usuario: UsuarioRegistro):
             conn.close()
             raise HTTPException(status_code=400, detail="El email ya está registrado")
             
-        # Insertar nuevo usuario guardando su email como CODIGO_QR
+        # Generar un código QR único
+        codigo_qr_unico = f"BATAK-{uuid.uuid4().hex[:8].upper()}"
+            
+        # Insertar nuevo usuario guardando su código QR único
         query = "INSERT INTO usuarios (nombre, email, password, CODIGO_QR) VALUES (%s, %s, %s, %s)"
-        cursor.execute(query, (usuario.nombre, usuario.email, usuario.password, usuario.email))
+        cursor.execute(query, (usuario.nombre, usuario.email, usuario.password, codigo_qr_unico))
         conn.commit()
         
         usuario_id = cursor.lastrowid
@@ -67,7 +71,7 @@ def registrar_usuario(usuario: UsuarioRegistro):
         return {
             "mensaje": "Usuario registrado exitosamente", 
             "id": usuario_id,
-            "qr_code": usuario.email
+            "qr_code": codigo_qr_unico
         }
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en BBDD: {err}")
