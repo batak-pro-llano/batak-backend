@@ -40,6 +40,8 @@ class ValidacionQR(BaseModel):
 class PartidaGuardar(BaseModel):
     usuario_id: int
     puntaje: int
+    nivel: int = 1
+    tiempo: str = "0s"
 
 @app.post("/api/registro")
 def registrar_usuario(usuario: UsuarioRegistro):
@@ -119,8 +121,8 @@ def guardar_partida(partida: PartidaGuardar):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        query = "INSERT INTO partidas (usuario_id, puntaje) VALUES (%s, %s)"
-        cursor.execute(query, (partida.usuario_id, partida.puntaje))
+        query = "INSERT INTO partidas (ID_USUARIO, POINT, NIVEL, TIEMPO_SEG) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (partida.usuario_id, partida.puntaje, partida.nivel, partida.tiempo))
         conn.commit()
         conn.close()
         
@@ -134,7 +136,7 @@ def obtener_historial(usuario_id: int):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        query = "SELECT id, puntaje, fecha FROM partidas WHERE usuario_id = %s ORDER BY fecha DESC"
+        query = "SELECT ID, POINT, NIVEL, TIEMPO_SEG, FECHA_PARTIDA FROM partidas WHERE ID_USUARIO = %s ORDER BY FECHHA_PARTIDA DESC"
         cursor.execute(query, (usuario_id,))
         partidas = cursor.fetchall()
         conn.close()
