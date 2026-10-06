@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -13,8 +14,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 def leer_app():
     return FileResponse("static/index.html")
 
-import os
-import mysql.connector
 # Configuración de la conexión a MySQL en Aiven.io
 def get_db_connection():
     return mysql.connector.connect(
@@ -57,15 +56,19 @@ def registrar_usuario(usuario: UsuarioRegistro):
             conn.close()
             raise HTTPException(status_code=400, detail="El email ya está registrado")
             
-        # Insertar nuevo usuario
-        query = "INSERT INTO usuarios (nombre, email, password) VALUES (%s, %s, %s)"
-        cursor.execute(query, (usuario.nombre, usuario.email, usuario.password))
+        # Insertar nuevo usuario guardando su email como CODIGO_QR
+        query = "INSERT INTO usuarios (nombre, email, password, CODIGO_QR) VALUES (%s, %s, %s, %s)"
+        cursor.execute(query, (usuario.nombre, usuario.email, usuario.password, usuario.email))
         conn.commit()
         
         usuario_id = cursor.lastrowid
         conn.close()
         
-        return {"mensaje": "Usuario registrado exitosamente", "id": usuario_id}
+        return {
+            "mensaje": "Usuario registrado exitosamente", 
+            "id": usuario_id,
+            "qr_code": usuario.email
+        }
     except mysql.connector.Error as err:
         raise HTTPException(status_code=500, detail=f"Error en BBDD: {err}")
 
@@ -75,7 +78,7 @@ def login_usuario(usuario: UsuarioLogin):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        query = "SELECT id, nombre, email FROM usuarios WHERE email = %s AND password = %s"
+        query = "SELECT id, nombre, email, CODIGO_QR FROM usuarios WHERE email = %s AND password = %s"
         cursor.execute(query, (usuario.email, usuario.password))
         user = cursor.fetchone()
         conn.close()
@@ -93,8 +96,8 @@ def validar_qr(data: ValidacionQR):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        query = "SELECT id, nombre, email FROM usuarios WHERE email = %s"
-        cursor.execute(query, (data.qr_code,))
+        query = "SELECT id, nombre, email FROM usuarios WHERE CODIGO_QR = %s OR email = %s"
+        cursor.execute(query, (data.qr_code, data.qr_code))
         user = cursor.fetchone()
         conn.close()
         
