@@ -359,7 +359,18 @@
                     lista.innerHTML = '';
                     data.partidas.forEach((p, index) => {
                         const fechaRaw = p.FECHA_PARTIDA || p.FECHHA_PARTIDA || p.fecha;
-                        const fechaFormateada = fechaRaw ? new Date(fechaRaw).toLocaleDateString() : `#${index + 1}`;
+                        let fechaFormateada = `#${index + 1}`;
+
+                        if (fechaRaw) {
+                            const fechaStr = String(fechaRaw).split('T')[0];
+                            const partes = fechaStr.split('-');
+                            if (partes.length === 3) {
+                                fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                            } else {
+                                fechaFormateada = new Date(fechaRaw).toLocaleDateString();
+                            }
+                        }
+
                         const nivel = p.NIVEL !== undefined && p.NIVEL !== null ? p.NIVEL : 1;
                         const tiempo = p.TIEMPO_SEG || '-';
                         const puntaje = p.POINT !== undefined ? p.POINT : 0;
