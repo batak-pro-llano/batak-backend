@@ -358,7 +358,7 @@
                 if (res.ok && data.partidas && data.partidas.length > 0) {
                     lista.innerHTML = '';
                     data.partidas.forEach((p, index) => {
-                        const fechaRaw = p.FECHHA_PARTIDA || p.fecha;
+                        const fechaRaw = p.FECHA_PARTIDA || p.FECHHA_PARTIDA || p.fecha;
                         const fechaFormateada = fechaRaw ? new Date(fechaRaw).toLocaleDateString() : `#${index + 1}`;
                         const nivel = p.NIVEL !== undefined && p.NIVEL !== null ? p.NIVEL : 1;
                         const tiempo = p.TIEMPO_SEG || '-';

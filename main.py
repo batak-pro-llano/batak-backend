@@ -136,7 +136,7 @@ def obtener_historial(usuario_id: int):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
         
-        query = "SELECT ID, POINT, NIVEL, TIEMPO_SEG, FECHA_PARTIDA FROM partidas WHERE ID_USUARIO = %s ORDER BY FECHHA_PARTIDA DESC"
+        query = "SELECT ID, POINT, NIVEL, TIEMPO_SEG, FECHA_PARTIDA FROM partidas WHERE ID_USUARIO = %s ORDER BY FECHA_PARTIDA DESC"
         cursor.execute(query, (usuario_id,))
         partidas = cursor.fetchall()
         conn.close()
